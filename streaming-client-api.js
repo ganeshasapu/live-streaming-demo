@@ -42,7 +42,7 @@ connectButton.onclick = async () => {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      source_url: 'https://d-id-public-bucket.s3.amazonaws.com/or-roman.jpg',
+      source_url: 'https://i.ibb.co/FVBRNcb/DALL-E-2024-01-13-18-04-04-A-hyper-realistic-digital-painting-of-a-man-with-dark-hair-a-neatly-trimm.png',
     }),
   });
 
@@ -73,7 +73,26 @@ connectButton.onclick = async () => {
 };
 
 const talkButton = document.getElementById('talk-button');
+const text_input = document.getElementById('text-input');
 talkButton.onclick = async () => {
+  const API_KEY = 'VF.DM.65a5728fd49938000750a39a.rfnd4y7duzmaBAVm';
+  const QUESTION = text_input.value;
+
+  const res = await fetch('https://general-runtime.voiceflow.com/knowledge-base/query', {
+    method: 'POST',
+    headers: {
+      Authorization: API_KEY,
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      question: QUESTION,
+    }),
+  })
+
+  const data = await res.json();
+  console.log(data.output)
+
   // connectionState not supported in firefox
   if (peerConnection?.signalingState === 'stable' || peerConnection?.iceConnectionState === 'connected') {
     const talkResponse = await fetchWithRetries(`${DID_API.url}/talks/streams/${streamId}`, {
@@ -84,8 +103,14 @@ talkButton.onclick = async () => {
       },
       body: JSON.stringify({
         script: {
-          type: 'audio',
-          audio_url: 'https://d-id-public-bucket.s3.us-west-2.amazonaws.com/webrtc.mp3',
+          type: 'text',
+          subtitles: 'false',
+          provider: {
+            type: 'microsoft',
+            voice_id: 'en-US-JennyNeural',
+          },
+          ssml: 'false',
+          input: data.output
         },
         driver_url: 'bank://lively/',
         config: {
@@ -162,7 +187,7 @@ function onVideoStatusChange(videoIsPlaying, stream) {
     setVideoElement(remoteStream);
   } else {
     status = 'empty';
-    playIdleVideo();
+    // playIdleVideo();
   }
   streamingStatusLabel.innerText = status;
   streamingStatusLabel.className = 'streamingState-' + status;
@@ -174,7 +199,7 @@ function onTrack(event) {
    * that's being streamed - It does so by periodically looking for changes in total stream data size
    *
    * This information in our case is used in order to show idle video while no talk is streaming.
-   * To create this idle video use the POST https://api.d-id.com/talks endpoint with a silent audio file or a text script with only ssml breaks 
+   * To create this idle video use the POST https://api.d-id.com/talks endpoint with a silent audio file or a text script with only ssml breaks
    * https://docs.aws.amazon.com/polly/latest/dg/supportedtags.html#break-tag
    * for seamless results use `config.fluent: true` and provide the same configuration as the streaming video
    */
