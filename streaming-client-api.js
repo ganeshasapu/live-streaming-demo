@@ -18,6 +18,8 @@ let statsIntervalId;
 let videoIsPlaying;
 let lastBytesReceived;
 
+let lastOutput;
+
 const talkVideo = document.getElementById('talk-video');
 talkVideo.setAttribute('playsinline', '');
 const peerStatusLabel = document.getElementById('peer-status-label');
@@ -26,14 +28,56 @@ const iceGatheringStatusLabel = document.getElementById('ice-gathering-status-la
 const signalingStatusLabel = document.getElementById('signaling-status-label');
 const streamingStatusLabel = document.getElementById('streaming-status-label');
 
+const loading = document.getElementById('loading');
+
+const dataElement = document.getElementById('messages')
+
+let messages = [
+  // {message: 'Hello there! What can I help you with?', float: 'start', cl: 'bg-slate-200', border: 'border-slate-400'},
+];
+
+setMessagesHTML();
+
+function setMessagesHTML(){
+  dataElement.innerHTML = '';
+  messages.map((item, index) => {
+    dataElement.insertAdjacentHTML(
+      'beforeend',
+      `
+    <div key=${index} class="w-full flex justify-${item.float}">
+      <div class="border ${item.cl} w-3/5 rounded-lg p-4 border ${item.border}">
+        <div data-title="Full Name">
+            ${item.message}
+        </div>
+      </div>
+    </div>
+`
+    );
+  });
+}
+
+document.addEventListener('DOMContentLoaded', (event) => {
+  const form = document.getElementById('input-form');
+  connect();
+
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault(); // Prevents the default form submission action
+
+    // Call your specific function here
+    startTalk();
+  });
+});
+
 const connectButton = document.getElementById('connect-button');
-connectButton.onclick = async () => {
+async function connect(){
   if (peerConnection && peerConnection.connectionState === 'connected') {
     return;
   }
 
+  loading.classList.remove('hidden');
+
   stopAllStreams();
-  closePC();
 
   const sessionResponse = await fetchWithRetries(`${DID_API.url}/talks/streams`, {
     method: 'POST',
@@ -42,7 +86,8 @@ connectButton.onclick = async () => {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      source_url: 'https://i.ibb.co/FVBRNcb/DALL-E-2024-01-13-18-04-04-A-hyper-realistic-digital-painting-of-a-man-with-dark-hair-a-neatly-trimm.png',
+      source_url: 'https://i.ibb.co/FnBmxbr/jay-v1.png',
+      driver_url: 'bank://lively/driver-06',
     }),
   });
 
@@ -70,13 +115,29 @@ connectButton.onclick = async () => {
       session_id: sessionId,
     }),
   });
+
+  loading.classList.add('hidden');
 };
 
 const talkButton = document.getElementById('talk-button');
 const text_input = document.getElementById('text-input');
-talkButton.onclick = async () => {
+async function startTalk(){
   const API_KEY = 'VF.DM.65a5728fd49938000750a39a.rfnd4y7duzmaBAVm';
   const QUESTION = text_input.value;
+
+  loading.classList.remove("hidden");
+
+  messages.push({
+    message: QUESTION,
+    float: 'end',
+    cl: 'bg-sky-200',
+    border: 'border-sky-400',
+  });
+
+  setMessagesHTML();
+
+  text_input.value = '';
+
 
   const res = await fetch('https://general-runtime.voiceflow.com/knowledge-base/query', {
     method: 'POST',
@@ -87,11 +148,17 @@ talkButton.onclick = async () => {
     },
     body: JSON.stringify({
       question: QUESTION,
+      // settings: {
+      //   model: 'gpt-4',
+      //   temperature: '0.1',
+      //   system:
+      //     "You are an AI FAQ assistant. Information will be provided to help answer the user's questions. Always summarize your response to be as brief as possible and be extremely concise. Your responses should be fewer than a couple of sentences. Include sources only when asking about the news items",
+      // },
     }),
-  })
+  });
 
   const data = await res.json();
-  console.log(data.output)
+  lastOutput = data.output;
 
   // connectionState not supported in firefox
   if (peerConnection?.signalingState === 'stable' || peerConnection?.iceConnectionState === 'connected') {
@@ -107,14 +174,15 @@ talkButton.onclick = async () => {
           subtitles: 'false',
           provider: {
             type: 'microsoft',
-            voice_id: 'en-US-JennyNeural',
+            voice_id: 'en-US-GuyNeural',
           },
           ssml: 'false',
-          input: data.output
+          input: data.output,
         },
         driver_url: 'bank://lively/',
         config: {
           stitch: true,
+          fluent: true,
         },
         session_id: sessionId,
       }),
@@ -187,7 +255,7 @@ function onVideoStatusChange(videoIsPlaying, stream) {
     setVideoElement(remoteStream);
   } else {
     status = 'empty';
-    // playIdleVideo();
+    playIdleVideo();
   }
   streamingStatusLabel.innerText = status;
   streamingStatusLabel.className = 'streamingState-' + status;
@@ -249,6 +317,19 @@ function setVideoElement(stream) {
   if (!stream) return;
   talkVideo.srcObject = stream;
   talkVideo.loop = false;
+
+  console.log(stream)
+
+  messages.push({
+    message: lastOutput,
+    float: 'start',
+    cl: 'bg-slate-200',
+    border: 'border-slate-400',
+  });
+
+  loading.classList.add('hidden');
+
+  setMessagesHTML();
 
   // safari hotfix
   if (talkVideo.paused) {

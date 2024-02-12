@@ -5,11 +5,10 @@
     <!-- added google fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;700&display=swap"
-      rel="stylesheet"
-    />
-
+    <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;700&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- <script type="module" src="./streaming-client-api.js"></script> -->
+    <!-- <script src="jquery.js"></script> -->
     <style>
       .peerConnectionState-new {
         color: cornflowerblue;
@@ -133,47 +132,119 @@
         margin: 0 auto;
         padding: 50px 0 0 0;
       }
+
+      .bot-container {
+        font-family: sans-serif;
+        position: fixed;
+        z-index: 1000;
+        border: 1px solid #666;
+        bottom: 10px;
+        right: 10px;
+        background-color: white;
+        padding: 5px;
+        width: 20%; /* Adjusted from 1/5 */
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        border-radius: 4px;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .title {
+        font-size: 1.25rem; /* 20px */
+      }
+
+      .toggle-button {
+        padding: 0.5rem;
+        cursor: pointer;
+      }
+
+      .hidden {
+        display: none;
+      }
       video {
         display: block;
         /*border:1px solid;*/
         border-radius: 50%;
         background-color: #fff;
       }
+      #messages::-webkit-scrollbar {
+        display: none;
+      }
+
+      /* Hide scrollbar for IE, Edge and Firefox */
+      #messages {
+        -ms-overflow-style: none; /* IE and Edge */
+        scrollbar-width: none; /* Firefox */
+      }
+
+      .loader {
+        border: 4px solid #f3f3f3; /* Light grey */
+        border-top: 4px solid #3498db; /* Blue */
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        animation: spin 2s linear infinite;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
     </style>
   </head>
 
   <body>
-    <!-- adde "id=content" -->
-    <div id="content">
-      <!-- added "id=video-wrapper" -->
-      <div id="video-wrapper">
-        <div>
-          <video id="talk-video" width="400" height="400" autoplay></video>
+
+    <img src="back.png"></img>
+    <!-- <iframe width="100%" height="1000px" src="output.html" seamless></iframe> -->
+    <div
+      class="font-custom font-sans fixed z-[1000] rounded-md border border-zinc-500 bottom-10 right-10 bg-white p-5 w-1/4 drop-shadow-2xl"
+    >
+
+      <div class="flex justify-between">
+        <p class="text-xl">JayAI</p>
+        <div class="p-2 cursor-pointer">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth="{1.5}"
+            stroke="currentColor"
+            class="w-7 h-7"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+          </svg>
         </div>
       </div>
-      <br />
 
-      <!-- added div#buttons -->
-      <div id="buttons">
-        <button id="connect-button" type="button">Connect</button>
-        <button id="talk-button" type="button">Start</button>
-        <button id="destroy-button" type="button">Destroy</button>
-        <label for="text-input">Enter text to be spoken:</label>
-        <input type="text" id="text-input" name="text-input">
+      <div class="transition-opacity	 duration-500 ease-in-out max-h-[550px] min-h-[550px] overflow-hidden mb-6 mt-2 relative">
+        <div class="w-full flex flex-col gap-2">
+          <div class="w-full flex justify-center items-center">
+            <div className="rounded-[50%] overflow-hidden m-6">
+              <!-- <div class="w-[200px] h-[200px] bg-red-400"></div> -->
+              <video id="talk-video" width="200" height="200" autoplay></video>
+            </div>
+          </div>
+          <div class="flex justify-center items-center">
+          <div id="loading" class="loader"></div>
+          </div>
+          <div id="messages" class="w-full overflow-y-auto h-[300px] flex flex-col gap-4 py-2"></div>
+        </div>
       </div>
 
-      <!-- added div#status -->
-      <div id="status">
-        <!-- removed the wrapping <div> tags -->
-        ICE gathering status: <label id="ice-gathering-status-label"></label
-        ><br />
-        ICE status: <label id="ice-status-label"></label><br />
-        Peer connection status: <label id="peer-status-label"></label><br />
-        Signaling status: <label id="signaling-status-label"></label><br />
-        Streaming status: <label id="streaming-status-label"></label><br />
+      <div class="transition-all duration-500 ease-in-out max-h-[1100px] overflow-hidden">
+        <form id="input-form" class="z-96">
+          <input
+            id="text-input"
+            class="block w-full bg-white rounded-md border-0 py-3 px-3 text-gray-900 ring-1 focus:outline-none focus:ring-gray-600 ring-inset ring-gray-300 placeholder:text-gray-400 sm:text-sm sm:leading-6'0 mb-4"
+            placeholder="How can I help you?"
+          />
+        </form>
       </div>
     </div>
-
     <script type="module" src="./index.js"></script>
   </body>
 </html>
